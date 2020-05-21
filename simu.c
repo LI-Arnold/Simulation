@@ -32,7 +32,7 @@ typedef struct Conteneur {
 
 typedef struct Slot {
 	int occupe; // 0 quand c'est libre et 1 quand c'est occupe
-	int numero; //numero de chaque slot
+	//int numero; //numero de chaque slot
 }slot;
 
 typedef struct Station {
@@ -70,6 +70,7 @@ void Init_Echeancier(){
 	Ajouter_Event(e);
 }
 
+//j'initialise la position de chaque station
 int positionStation(int i){
 	return ((150/K)*i);
 }
@@ -87,7 +88,7 @@ void Init_Slot(anneau *A){
 	int i;
 	for(i = 0; i<nbSlot; i++){
 		A->Slo[i].occupe = 0;
-		A->Slo[i].numero = i;
+		//A->Slo[i].numero = i;
 	}
 }
 
@@ -106,18 +107,27 @@ void Init_Anneau(anneau *A){
 	//Initialisation variables
 	temps = 0;
 	N = 0;
-	Nservi = 0:
+	Nservi = 0;
 	
+	
+}
+
+void Decale_Anneau(anneau *A){
+	int i;
+	//je decalle les conteneurs
+	for(i = 0; i < A->Nanneau; i++){
+		A->Slo[A->Cont[i].position].occupe = 0;  //je mets tous les slots libre
+		A->Cont[i].position = (A->Cont->position + 1) % nbSlot;
+		A->Slo[A->Cont[i].position].occupe = 1;  //je regarde où sont les nouveaux conteneur et je mets les slots correspondqnt dans l'état :  occupé
+		A->Cont[i].nbdeplacement -=1;
+		if(A->Cont[i].nbdeplacement <= 0) A->Cont->nbdeplacement = 0;
+	}
 	
 }
 
 void Ajout_Conteneur(anneau *A){
 	A->Cont = malloc(A->Nanneau * sizeof(conteneur));
 }
-
-
-
-
 
 
 int main (){
