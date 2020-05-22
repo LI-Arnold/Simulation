@@ -6,7 +6,7 @@
 
 #define MAXEVENT 10000
 #define nbSlot 150
-#define K 10 //nbr de stations dans l'anneau
+#define K 3 //nbr de stations dans l'anneau
 int N; // total conteneurs qui ont été produit
 int temps;
 int Nservi; // conteneurs sortis du système
@@ -44,7 +44,7 @@ typedef struct Station {
 typedef struct Anneau {
 	station Stati[K];
 	slot Slo[nbSlot];
-	conteneur *Cont;
+	conteneur Cont[nbSlot];
 	int Nanneau; //nombre de conteneur dans l'anneau
 }anneau;
 
@@ -93,7 +93,11 @@ void Init_Slot(anneau *A){
 }
 
 void Init_Conteneur(anneau *A){
-	A->Cont = malloc(A->Nanneau * sizeof(conteneur));
+	int i;
+	for(i = 0; i<nbSlot; i++) {
+		A->Cont[i].nbdeplacement = 150;
+		A->Cont[i].position = -1;
+	}
 }
 
 void Init_Anneau(anneau *A){
@@ -101,7 +105,8 @@ void Init_Anneau(anneau *A){
 	Init_Slot(A);
 	
 	A->Nanneau = 0;
-	Init_Conteneur(A);
+	//printf("t : %d",A->Nanneau);
+	//Init_Conteneur(A);
 	
 	
 	//Initialisation variables
@@ -109,29 +114,188 @@ void Init_Anneau(anneau *A){
 	N = 0;
 	Nservi = 0;
 	
-	
+	//j'ajoute la premiere vague de conteneur
+	//Init_Ajout_Conteneur_Anneau(A);
 }
 
 void Decale_Anneau(anneau *A){
 	int i;
+	temps ++;
 	//je decalle les conteneurs
 	for(i = 0; i < A->Nanneau; i++){
 		A->Slo[A->Cont[i].position].occupe = 0;  //je mets tous les slots libre
-		A->Cont[i].position = (A->Cont->position + 1) % nbSlot;
+		A->Cont[i].position = (A->Cont[i].position + 1) % nbSlot;
 		A->Slo[A->Cont[i].position].occupe = 1;  //je regarde où sont les nouveaux conteneur et je mets les slots correspondqnt dans l'état :  occupé
 		A->Cont[i].nbdeplacement -=1;
-		if(A->Cont[i].nbdeplacement <= 0) A->Cont->nbdeplacement = 0;
+		if(A->Cont[i].nbdeplacement <= 0) A->Cont[i].nbdeplacement = 0;
 	}
 	
 }
 
-void Ajout_Conteneur(anneau *A){
-	A->Cont = malloc(A->Nanneau * sizeof(conteneur));
+void Avance_Delta(anneau *A){
+	int i;
+	for(i = 0; i < K; i++) // quand je décale l'anneau toutes les station vont avoir leur delta qui augmente de 1
+		A->Stati[i].delta += 1;
+		
+}
+
+void Ajout_Conteneur(anneau *A, int k){
+	A->Nanneau += 1;
+	//A->Cont = malloc(A->Nanneau * sizeof(conteneur));
+	A->Cont[A->Nanneau-1].nbdeplacement = nbSlot;
+	A->Cont[A->Nanneau-1].position = A->Stati[k].position;	
+	
+}
+
+void remplir_Station(anneau *A){
+	int i;
+	for(i = 0; i < K; i++){
+		A->Stati[i].Nstation += rand()%9+1;
+	}
+}
+
+void affiche_Conteneur(anneau *A){
+	int i;
+	printf("\n");
+	for(i = 0; i < A->Nanneau; i++){
+		printf("Conteneur Position: %d  deplacement : %d \t",A->Cont[i].position, A->Cont[i].nbdeplacement);
+		//if((i%5) == 0) printf("\n");
+
+	}
+	
+}
+
+
+void affiche_Station(anneau *A){
+	int i;
+	for(i = 0; i < K; i++){
+		printf("\nStation N° %d contient : %d conteneur(s) et delta = %d\n",A->Stati[i].position, A->Stati[i].Nstation, A->Stati[i].delta);
+	}
+}
+void affiche_Slots(anneau *A){
+	int i;
+	printf("\n");
+	for(i = 0; i < nbSlot; i++){
+		if(A->Slo[i].occupe == 1){
+			printf("Slots N° %d  Etat : %d \t",i, A->Slo[i].occupe);
+			//if((i%10) == 0) printf("\n");
+		}
+	}
+}
+
+void Ajout_Conteneur_Anneau(anneau *A){
+	int i; //indice pour parcours toutes les stations;
+	temps ++;
+	for(i = 0; i < K; i++){
+		if(A->Stati[i].delta >= 10){ //je regarde si la station i a bien attendu 10 slots avant de vouloi insérer un conteneur dans l'anneau
+			if(A->Stati[i].Nstation > 0) { //je regarde si la station possede des conteneurs à ajouter
+				if(A->Slo[A->Stati[i].position].occupe == 0) { //Je regarde si le slot dans l'anneau est bien vide 
+					A->Stati[i].delta = 0;
+					A->Stati[i].Nstation -= 1;
+					A->Slo[A->Stati[i].position].occupe = 1;
+					Ajout_Conteneur(A, i);
+					A->Cont[A->Nanneau-1].position = A->Stati[i].position;
+					N++;
+				}
+			}
+		}
+	}
+	
+}
+/*
+void affiche_Conteneur(anneau *A){
+	int i;
+	printf("\n");
+	for(i = 0; i < A->Nanneau; i++){
+		printf("Conteneur Position: %d  deplacement : %d \t",A->Cont[i].position, A->Cont[i].nbdeplacement);
+		if((i%5) == 0) printf("\n");
+
+	}
+}
+*/
+void Init_Ajout_Conteneur_Anneau(anneau *A){
+	int i; //indice pour parcours toutes les stations;
+	temps ++;
+	for(i = 0; i < K; i++){
+		if(A->Stati[i].Nstation > 0) { //je regarde si la station possede des conteneurs à ajouter
+			if(A->Slo[A->Stati[i].position].occupe == 0) { //Je regarde si le slot dans l'anneau est bien vide 
+				A->Stati[i].delta = 0;
+				A->Stati[i].Nstation -= 1;
+				A->Slo[A->Stati[i].position].occupe = 1;
+				Ajout_Conteneur(A, i);
+				
+				N++;
+			}
+		}
+	}
+}
+
+void Supprime_Conteneur_Anneau(anneau *A){
+	int i; //indice pour parcours toutes les stations;
+	int l;
+	int j[ A->Nanneau]; //Numero du conteneur à retirer
+	int pos = 0; //indice de parcours des conteneurs
+	temps ++;
+	
+	for(i = 0; i < A->Nanneau; i++){
+		j[i] = -1;
+	}
+	
+	for(i = 0; i < A->Nanneau; i++){
+		if(A->Cont[i].nbdeplacement == 0){ //si le conteneur à fait un tour dans l'anneau, je le supprime 
+			j[pos] = i;
+			A->Slo[A->Stati[i].position].occupe = 0; //Je libere le slot
+			Nservi ++;
+			pos ++;
+		}
+	}
+	
+	for(l = 0; l < A->Nanneau; l++){
+		if(j[l] != -1) {
+			for (i = j[l] - 1; i < A->Nanneau - 1; i++){
+				A->Cont[i].nbdeplacement = A->Cont[i+1].nbdeplacement;
+				A->Cont[i].position = A->Cont[i+1].position;
+			}
+		}
+	}
+	
+	A->Nanneau -= pos;
+	
+	
+	
+}
+
+void Simulation(anneau *A){
+	remplir_Station(A); //Je rempli les stations avec un nobre de conteneur
+	affiche_Station(A);
+	Init_Ajout_Conteneur_Anneau(A); //j'ajoute la premiere vague de conteneur
+	
+	int i = 200;
+	affiche_Slots(A);
+	affiche_Conteneur(A);
+	do {
+		printf("\n\n**************** i = %d ****************\n\n",i);
+		Ajout_Conteneur_Anneau(A);
+		Decale_Anneau(A);
+		Avance_Delta(A);
+		Supprime_Conteneur_Anneau(A);
+		
+		affiche_Station(A);
+		affiche_Slots(A);
+		affiche_Conteneur(A);
+		i--;
+	}while(i != 0);
+	
+	
 }
 
 
 int main (){
+	srand(time(NULL));
+	anneau A;
 	
+	Init_Anneau(&A);
+	Simulation(&A);
 	return 0;
 	
 }
