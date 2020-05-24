@@ -70,6 +70,35 @@ void Init_Echeancier(){
 	Ajouter_Event(e);
 }
 
+double Fct_Repart(){
+	FILE *f = fopen("InterArrivee.txt","r");
+	double r = (double)random()/RAND_MAX;
+	int duree = r*108;
+	printf("duree= %d\n",duree);
+	double p;
+	int test=109;
+	while(duree != test){
+		fscanf(f,"%d %lf",&test,&p);
+	}
+	fclose(f);
+	return p;
+}
+
+int Generer_Duree(){
+	FILE *f = fopen("InterArrivee.txt","r");
+	double p = Fct_Repart(f);
+	printf("p= %lf\n",p);
+	double test = 1.0;
+	int duree;
+	while(test != p){
+		fscanf(f,"%d %lf",&duree,&test);
+		printf("test= %lf\n",test);
+	}
+	printf("duree= %d\n",duree);
+	fclose(f);
+	return duree;
+}
+
 //j'initialise la position de chaque station
 int positionStation(int i){
 	return ((150/K)*i);
@@ -164,7 +193,6 @@ void affiche_Conteneur(anneau *A){
 	}
 	
 }
-
 
 void affiche_Station(anneau *A){
 	int i;
@@ -294,8 +322,9 @@ int main (){
 	srand(time(NULL));
 	anneau A;
 	
-	Init_Anneau(&A);
-	Simulation(&A);
+	int a = Generer_Duree();
+	//Init_Anneau(&A);
+	//Simulation(&A);
 	return 0;
 	
 }
