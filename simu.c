@@ -37,7 +37,7 @@ typedef struct Slot {
 
 typedef struct Station {
 	int position;
-	int Nstation; //nb de contenaur que la station possede
+	int Nstation; //nb de conteneurs que la station possede
 	int delta;
 }station;
 
@@ -45,7 +45,7 @@ typedef struct Anneau {
 	station Stati[K];
 	slot Slo[nbSlot];
 	conteneur Cont[nbSlot];
-	int Nanneau; //nombre de conteneur dans l'anneau
+	int Nanneau; //nombre de conteneurs dans l'anneau
 }anneau;
 
 void Ajouter_Event(event e){
@@ -230,17 +230,7 @@ void Ajout_Conteneur_Anneau(anneau *A){
 	}
 	
 }
-/*
-void affiche_Conteneur(anneau *A){
-	int i;
-	printf("\n");
-	for(i = 0; i < A->Nanneau; i++){
-		printf("Conteneur Position: %d  deplacement : %d \t",A->Cont[i].position, A->Cont[i].nbdeplacement);
-		if((i%5) == 0) printf("\n");
 
-	}
-}
-*/
 void Init_Ajout_Conteneur_Anneau(anneau *A){
 	int i; //indice pour parcours toutes les stations;
 	temps ++;
@@ -293,7 +283,7 @@ void Supprime_Conteneur_Anneau(anneau *A){
 	
 }
 
-void Simulation(anneau *A){
+void Simulation(FILE *f1, anneau *A){
 	remplir_Station(A); //Je rempli les stations avec un nobre de conteneur
 	affiche_Station(A);
 	Init_Ajout_Conteneur_Anneau(A); //j'ajoute la premiere vague de conteneur
@@ -311,6 +301,11 @@ void Simulation(anneau *A){
 		affiche_Station(A);
 		affiche_Slots(A);
 		affiche_Conteneur(A);
+		if(temps == 0){
+			fprintf(f1, "0    0 \n");
+		}else{
+			fprintf(f1, "%d    %d \n", temps, A->Nanneau);
+		}
 		i--;
 	}while(i != 0);
 	
@@ -319,12 +314,13 @@ void Simulation(anneau *A){
 
 
 int main (){
+	FILE *f1 = fopen("Simulation_nb_conteneurs.data","w");
 	srand(time(NULL));
 	anneau A;
 	
 	int a = Generer_Duree();
-	//Init_Anneau(&A);
-	//Simulation(&A);
+	Init_Anneau(&A);
+	Simulation(f1, &A);
 	return 0;
 	
 }

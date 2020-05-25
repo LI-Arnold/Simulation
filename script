@@ -1,0 +1,9 @@
+#script à lancer : ./script
+
+gcc simu.c -o simu -lm
+./simu
+R CMD BATCH Draw.R
+
+#non accordée permission non "chmod +x script"
+# j'execute : "time -p ./script"
+
