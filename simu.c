@@ -74,7 +74,6 @@ double Fct_Repart(){
 	FILE *f = fopen("InterArrivee.txt","r");
 	double r = (double)random()/RAND_MAX;
 	int duree = r*108;
-	printf("duree= %d\n",duree);
 	double p;
 	int test=109;
 	while(duree != test){
@@ -87,14 +86,11 @@ double Fct_Repart(){
 int Generer_Duree(){
 	FILE *f = fopen("InterArrivee.txt","r");
 	double p = Fct_Repart(f);
-	printf("p= %lf\n",p);
 	double test = 1.0;
 	int duree;
 	while(test != p){
 		fscanf(f,"%d %lf",&duree,&test);
-		printf("test= %lf\n",test);
 	}
-	printf("duree= %d\n",duree);
 	fclose(f);
 	return duree;
 }
@@ -178,8 +174,12 @@ void Ajout_Conteneur(anneau *A, int k){
 
 void remplir_Station(anneau *A){
 	int i;
+	int duree = Generer_Duree();
 	for(i = 0; i < K; i++){
-		A->Stati[i].Nstation += rand()%9+1;
+		if(duree == 0){
+		A->Stati[i].Nstation++;
+		}
+		duree = duree-temps;
 	}
 }
 
@@ -309,7 +309,6 @@ void Simulation(FILE *f1, anneau *A){
 		i--;
 	}while(i != 0);
 	
-	
 }
 
 
@@ -317,8 +316,6 @@ int main (){
 	FILE *f1 = fopen("Simulation_nb_conteneurs.data","w");
 	srand(time(NULL));
 	anneau A;
-	
-	int a = Generer_Duree();
 	Init_Anneau(&A);
 	Simulation(f1, &A);
 	return 0;
