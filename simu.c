@@ -8,6 +8,7 @@
 #define nbSlot 150
 #define K 10 //nbr de stations dans l'anneau
 #define EPSILON 50
+int compteur= 0;
 
 int N; // total conteneurs qui ont été produit
 int temps;
@@ -256,7 +257,7 @@ void affiche_Slots(anneau *A){
 		}
 	}
 }
-affiche_total_slots_occupes(anneau *A){
+void affiche_total_slots_occupes(anneau *A){
 	int i;
 	int compte = 0;
 	printf("\n");
@@ -340,12 +341,13 @@ void Supprime_Conteneur_Anneau(anneau *A){
 }
 
 int Condition_arret(int slotAncien, int slotNouveau){
-	int compteur= 0;
+	
 	if ( abs(slotAncien-slotNouveau) < EPSILON){
 		compteur ++;
 		
-		if(compteur >50) return 1;
+		if(compteur >1e3) return 1;
 	}
+	else compteur = 0;
 	return 0;
 }
 
@@ -380,9 +382,9 @@ void Simulation(FILE *f1, anneau *A){
 			fprintf(f1, "%d    %d \n", temps, A->Nanneau);
 		}
 		i++;
-		Condition_arret(slotAncien,slotNouveau);
-	}while(i != 10000);
-	//}while(Condition_arret(slotAncien,slotNouveau) == 0);
+		//Condition_arret(slotAncien,slotNouveau);
+	//}while(i != 10000);
+	}while(Condition_arret(slotAncien,slotNouveau) == 0);
 	
 }
 
