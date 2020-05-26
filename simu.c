@@ -7,6 +7,8 @@
 #define MAXEVENT 10000
 #define nbSlot 150
 #define K 22 //nbr de stations dans l'anneau
+#define EPSILON 10
+
 int N; // total conteneurs qui ont été produit
 int temps;
 int Nservi; // conteneurs sortis du système
@@ -295,14 +297,26 @@ void Supprime_Conteneur_Anneau(anneau *A){
 	
 }
 
+int Condition_arret(int slotAncien, int slotNouveau){
+	int compteur= 0;
+	if ( abs(slotAncien-slotNouveau) < EPSILON){
+		compteur ++;
+		
+		if(compteur >1e3) return 1;
+	}
+	return 0;
+}
+
 void Simulation(FILE *f1, anneau *A){
+	int slotAncien;
+	int slotNouveau;
 	affiche_Station(A);
 	Init_Ajout_Conteneur_Anneau(A); //j'ajoute la premiere vague de conteneur
-	
-	int i = 200;
+	int  i= 0;
 	affiche_Slots(A);
 	affiche_Conteneur(A);
 	do {
+		slotAncien = slotNouveau;
 		remplir_conteneur(A);
 		remplir_Station(A); //Je rempli les stations avec un nobre de conteneur
 		printf("\n\n**************** i = %d ****************\n\n",i);
@@ -311,16 +325,19 @@ void Simulation(FILE *f1, anneau *A){
 		Avance_Delta(A);
 		Supprime_Conteneur_Anneau(A);
 		
+		slotNouveau = A->Nanneau;
+		
 		affiche_Station(A);
 		//affiche_Slots(A);
 		//affiche_Conteneur(A);
 		if(temps == 0){
 			fprintf(f1, "0    0 \n");
-		}else{
+		}
+		else{
 			fprintf(f1, "%d    %d \n", temps, A->Nanneau);
 		}
-		i--;
-	}while(i != 0);
+		i++;
+	}while(Condition_arret(slotAncien,slotNouveau) == 0);
 	
 }
 
