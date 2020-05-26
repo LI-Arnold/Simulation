@@ -4,6 +4,10 @@ gcc simu.c -o simu -lm
 ./simu
 R CMD BATCH Draw.R
 
+R CMD BATCH Draw2.R
+
+R CMD BATCH Draw3.R
+
 #non accordée permission non "chmod +x script"
 # j'execute : "time -p ./script"
 

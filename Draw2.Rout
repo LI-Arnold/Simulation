@@ -18,17 +18,17 @@ Tapez 'q()' pour quitter R.
 [Sauvegarde de la session précédente restaurée]
 
 > #pour executer le code : R CMD BATCH Draw.R
-> modelname = "Simulation_nb_conteneurs.data"
+> modelname = "Simulation_attente1.data"
 > data = read.table(modelname)
 > attach(data); 
 > 
 > 
 > temps = V1
-> Nanneau = V2
+> attente = V2
 > 
-> pdf(file="Simulation_nombre_de_slots_occupes.pdf")
-> plot(temps,Nanneau,type="l",xlab="temps", ylab="Quantité",col="red",main="Simulation nombre de slots occupé")
+> pdf(file="Simulation_délai_attente_station1.pdf")
+> plot(temps,attente,type="l",xlab="temps", ylab="temps attente",col="red",main="Simulation délai d'attente station 1")
 > 
 > proc.time()
 utilisateur     système      écoulé 
-      0.506       0.015       0.700 
+      0.490       0.029       0.778 

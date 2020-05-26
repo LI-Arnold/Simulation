@@ -6,15 +6,105 @@
 
 #define MAXEVENT 10000
 #define nbSlot 150
-#define K 10 //nbr de stations dans l'anneau
-#define EPSILON 50
-int compteur= 0;
+#define K 11 //nbr de stations dans l'anneau
+#define EPSILON 100
+
 
 int N; // total conteneurs qui ont été produit
 int temps;
 int Nservi; // conteneurs sortis du système
+int compteur= 0; //condition d'arrêt <=> manchon
+int delai1 = 0;
+int delai10 = 0;
+
+struct elem{
+	int attente;
+	struct elem *suiv;
+};typedef struct elem* liste;
+
+liste creer_liste(){return NULL;}
+
+int est_vide(liste l)
+{
+	if(l == NULL)
+		return 1;
+	return 0;
+}
+
+void affiche_liste(liste l)
+{
+	
+	if(est_vide(l))
+	{
+		printf("La liste est vide \n");
+		return;
+	}
+	while(l)
+	{
+		printf("%d ",l->attente);
+		l = l->suiv;
+	}
+	printf("\n");
+}
+
+liste libere_liste(liste l)
+{
+	liste tmp;
+	while(l)
+	{
+		tmp = l->suiv;
+		//printf("libération de %d\n",l->val);
+		free(l);
+		l = tmp;
+	}
+	return NULL;
+}
+
+liste ajoute_elem_fin(liste l)
+{
+	liste new = malloc(sizeof(struct elem));
+	new->attente = 0;
+	new->suiv = NULL;
+	if(est_vide(l))
+	{
+		return new;
+	}
+	liste debut = l;
+	//on place le pointeur sur le dernier element de la liste
+	while(l->suiv)
+		l = l->suiv;
+	l->suiv = new;
+	return debut;
+}
 
 
+
+//supprime l'element d'indice i
+liste supprime_elem(liste l)
+{
+	if(est_vide(l))return l;
+	//Premier element
+	liste tmp;
+	tmp = l->suiv;
+	free(l);
+	return tmp;
+}
+
+
+liste attente_liste(liste l)
+{
+	
+	if(est_vide(l)) return l;
+	liste debut = l;
+	while(l){
+		l->attente = l->attente + 1;
+		l = l->suiv;
+	}
+	return debut;
+}
+
+
+//--------------------------------------------------------------------------
 typedef struct Event{
 	int Et; //état station (T/F)
 	int Es; //état de chaque slots : 0 pour slot libre et 1 pour slot non libre
@@ -33,6 +123,8 @@ typedef struct Conteneur {
 	int nbdeplacement; // nombre de déplacement à effectuer avant de sortir de l'anneau
 }conteneur;
 
+
+
 typedef struct Slot {
 	int occupe; // 0 quand c'est libre et 1 quand c'est occupe
 	//int numero; //numero de chaque slot
@@ -43,6 +135,7 @@ typedef struct Station {
 	int Nstation; //nb de conteneurs que la station possede
 	int delta;
 	int duree; //duree d'attente entre chaque nouveau conteneur produit 
+	liste l; // liste d'attente de conteneurs
 }station;
 
 typedef struct Anneau {
@@ -110,6 +203,7 @@ void Init_Station(anneau *A){
 		A->Stati[i].position = positionStation(i);
 		A->Stati[i].Nstation = 0;
 		A->Stati[i].delta = 0;
+		A->Stati[i].l = creer_liste();
 	}
 }
 
@@ -174,6 +268,12 @@ void Avance_Delta(anneau *A){
 		
 }
 
+void Ajout_Conteneur_File(anneau *A, int k){
+	//A->Cont[A->Stati[i].Nstation-1].attente = 0;
+	A->Stati[k].l = ajoute_elem_fin(A->Stati[k].l);
+	
+}
+
 void Ajout_Conteneur(anneau *A, int k){
 	A->Nanneau += 1;
 	//A->Cont = malloc(A->Nanneau * sizeof(conteneur));
@@ -192,12 +292,19 @@ void remplir_Station(anneau *A){
 
 void remplir_conteneur(anneau *A){
 	int i;
-	int tmp = 0;
+	//int tmp = 0;
 	for(i=0;i<K;i++){
 		
 		if(A->Stati[i].duree == 0){
 				A->Stati[i].Nstation ++;
 				A->Stati[i].duree = Generer_Duree();
+				A->Stati[i].duree -= 50;
+				if(A->Stati[i].duree <=0){
+					A->Stati[i].duree = 0;
+					A->Stati[i].duree +=7;
+				 }
+					Ajout_Conteneur_File(A, i);
+					N++;
 			}
 		/*if((A->Stati[i].duree == 0) && (A->Stati[i].Nstation == 0)){
 			A->Stati[i].duree = Generer_Duree();
@@ -245,6 +352,7 @@ void affiche_Station(anneau *A){
 	int i;
 	for(i = 0; i < K; i++){
 		printf("\nStation N° %d contient : %d conteneur(s)  delta = %d et durée = %d\n",A->Stati[i].position, A->Stati[i].Nstation, A->Stati[i].delta, A->Stati[i].duree);
+		affiche_liste(A->Stati[i].l);
 	}
 }
 void affiche_Slots(anneau *A){
@@ -268,20 +376,33 @@ void affiche_total_slots_occupes(anneau *A){
 	}
 	printf("i = %d ==> %d conteneurs\n",temps, compte);
 }
-void Ajout_Conteneur_Anneau(anneau *A){
+void Ajout_Conteneur_Anneau(anneau *A, FILE *f2, FILE *f3){
 	int i; //indice pour parcours toutes les stations;
 	temps ++;
 	for(i = 0; i < K; i++){
-		if(A->Stati[i].delta >= 10){ //je regarde si la station i a bien attendu 10 slots avant de vouloi insérer un conteneur dans l'anneau
-			if(A->Stati[i].Nstation > 0) { //je regarde si la station possede des conteneurs à ajouter
+		if(A->Stati[i].Nstation > 0) { //je regarde si la station possede des conteneurs à ajouter
+			if(A->Stati[i].delta >= 10){ //je regarde si la station i a bien attendu 10 slots avant de vouloi insérer un conteneur dans l'anneau
 				if(A->Slo[A->Stati[i].position].occupe == 0) { //Je regarde si le slot dans l'anneau est bien vide 
 					A->Stati[i].delta = 0;
 					A->Stati[i].Nstation -= 1;
 					A->Slo[A->Stati[i].position].occupe = 1;
 					Ajout_Conteneur(A, i);
+					
 					A->Cont[A->Nanneau-1].position = A->Stati[i].position;
-					N++;
+					if(i == 1) {
+						delai1 = A->Stati[i].l->attente;
+						fprintf(f2, "%d    %d \n", temps, delai1);
+					}
+					else if(i == 10) {
+						delai10 = A->Stati[i].l->attente;
+						fprintf(f3, "%d    %d \n", temps, delai10);
+					}
+					A->Stati[i].l = supprime_elem(A->Stati[i].l);
+					//N++;
 				}
+			}
+			else{ //temps d'attente augmente
+				A->Stati[i].l = attente_liste(A->Stati[i].l);
 			}
 		}
 	}
@@ -348,10 +469,17 @@ int Condition_arret(int slotAncien, int slotNouveau){
 		if(compteur >1e3) return 1;
 	}
 	else compteur = 0;
+	if (temps == 10000) return 1;  
+	/*
+	 * Que proposeriez vous pour arrêter la simulaton lorsque l'anneau ne se stabilise pas?
+	 * on l'arret au bout d'un certains temps.
+*/
 	return 0;
 }
 
 void Simulation(FILE *f1, anneau *A){
+	FILE *f2 = fopen("Simulation_attente1.data","w");
+	FILE *f3 = fopen("Simulation_attente10.data","w");
 	int slotAncien;
 	int slotNouveau = 0;
 	affiche_Station(A);
@@ -364,16 +492,16 @@ void Simulation(FILE *f1, anneau *A){
 		remplir_conteneur(A);
 		//remplir_Station(A); //Je rempli les stations avec un nobre de conteneur
 		printf("\n\n**************** i = %d ****************\n\n",i);
-		Ajout_Conteneur_Anneau(A);
+		Ajout_Conteneur_Anneau(A, f2, f3);
 		Decale_Anneau(A);
 		Avance_Delta(A);
 		Supprime_Conteneur_Anneau(A);
 		
 		slotNouveau = A->Nanneau;
 		
-		//affiche_Station(A);
+		affiche_Station(A);
 		//affiche_Slots(A);
-		affiche_total_slots_occupes(A);
+		//affiche_total_slots_occupes(A);
 		//affiche_Conteneur(A);
 		if(temps == 0){
 			fprintf(f1, "0    0 \n");
