@@ -6,7 +6,7 @@
 
 #define MAXEVENT 10000
 #define nbSlot 150
-#define K 3 //nbr de stations dans l'anneau
+#define K 22 //nbr de stations dans l'anneau
 int N; // total conteneurs qui ont été produit
 int temps;
 int Nservi; // conteneurs sortis du système
@@ -39,6 +39,7 @@ typedef struct Station {
 	int position;
 	int Nstation; //nb de conteneurs que la station possede
 	int delta;
+	int duree;
 }station;
 
 typedef struct Anneau {
@@ -130,6 +131,9 @@ void Init_Anneau(anneau *A){
 	Init_Slot(A);
 	
 	A->Nanneau = 0;
+	for(int i=0;i<K;i++){
+		A->Stati[i].duree = 0;
+	}
 	//printf("t : %d",A->Nanneau);
 	//Init_Conteneur(A);
 	
@@ -174,12 +178,20 @@ void Ajout_Conteneur(anneau *A, int k){
 
 void remplir_Station(anneau *A){
 	int i;
-	int duree = Generer_Duree();
-	for(i = 0; i < K; i++){
-		if(duree == 0){
-		A->Stati[i].Nstation++;
+	if(A->Stati[i].duree == 0){
+		for(i=0;i<K;i++){
+			A->Stati[i].Nstation ++;
 		}
-		duree = duree-temps;
+	}
+}
+
+void remplir_conteneur(anneau *A){
+	int i;
+	for(i=0;i<K;i++){
+		if(A->Stati[i].duree == 0 && A->Stati[i].Nstation == 0){
+			A->Stati[i].duree = Generer_Duree();
+			printf("%d",A->Stati[i].duree);
+		}
 	}
 }
 
@@ -284,7 +296,6 @@ void Supprime_Conteneur_Anneau(anneau *A){
 }
 
 void Simulation(FILE *f1, anneau *A){
-	remplir_Station(A); //Je rempli les stations avec un nobre de conteneur
 	affiche_Station(A);
 	Init_Ajout_Conteneur_Anneau(A); //j'ajoute la premiere vague de conteneur
 	
@@ -292,6 +303,8 @@ void Simulation(FILE *f1, anneau *A){
 	affiche_Slots(A);
 	affiche_Conteneur(A);
 	do {
+		remplir_conteneur(A);
+		remplir_Station(A); //Je rempli les stations avec un nobre de conteneur
 		printf("\n\n**************** i = %d ****************\n\n",i);
 		Ajout_Conteneur_Anneau(A);
 		Decale_Anneau(A);
@@ -299,8 +312,8 @@ void Simulation(FILE *f1, anneau *A){
 		Supprime_Conteneur_Anneau(A);
 		
 		affiche_Station(A);
-		affiche_Slots(A);
-		affiche_Conteneur(A);
+		//affiche_Slots(A);
+		//affiche_Conteneur(A);
 		if(temps == 0){
 			fprintf(f1, "0    0 \n");
 		}else{
