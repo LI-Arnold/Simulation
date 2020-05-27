@@ -20,5 +20,15 @@ Tapez 'q()' pour quitter R.
 > #pour executer le code : R CMD BATCH Draw.R
 > modelname = "Simulation_attente10.data"
 > data = read.table(modelname)
-Error in read.table(modelname) : pas de lignes disponibles dans l'entrée
-Exécution arrêtée
+> attach(data); 
+> 
+> 
+> temps = V1
+> attente = V2
+> 
+> pdf(file="Simulation_délai_attente_station10.pdf")
+> plot(temps,attente,type="l",xlab="temps", ylab="temps attente",col="red",main="Simulation délai d'attente station 10")
+> 
+> proc.time()
+utilisateur     système      écoulé 
+      0.535       0.034       0.753 

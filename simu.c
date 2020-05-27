@@ -6,8 +6,8 @@
 
 #define MAXEVENT 10000
 #define nbSlot 150
-#define K 6 //nbr de stations dans l'anneau
-#define EPSILON 5
+#define K 111 //nbr de stations dans l'anneau
+#define EPSILON 12
 
 
 /* ********* Variables globales ********** */
@@ -351,7 +351,7 @@ int Condition_arret(int slotAncien, int slotNouveau){
 		if(compteur >1e3) return 1;
 	}
 	else compteur = 0;
-	if (temps == 10000) {
+	if (temps >= 25000) {
 		printf("\narret forcé au bout de %d itérations\n",temps);
 		return 1;   // Si le système ne se stabilise pas, arrêter le programme au bout
 									// d'un certains temps.
@@ -426,7 +426,8 @@ void Simulation(FILE *f1, anneau *A){
 		Avance_Delta(A);
 		Supprime_Conteneur_Anneau(A);
 	
-		slotNouveau = A->Nanneau;
+		//slotNouveau = A->Nanneau;
+		slotNouveau = delai1;
 		
 		affiche_Station(A);
 		//affiche_Slots(A);
